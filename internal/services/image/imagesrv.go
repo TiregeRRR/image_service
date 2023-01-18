@@ -2,9 +2,12 @@ package image
 
 import (
 	"context"
+	"net"
 	"time"
 
 	"go.uber.org/fx"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/TiregeRRR/image_service/internal/controllers/image"
@@ -16,6 +19,7 @@ type In struct {
 	fx.In
 
 	LC              fx.Lifecycle
+	Logger          *zap.Logger
 	ImageController *image.Controller
 }
 
@@ -25,10 +29,27 @@ type Service struct {
 	ImageController *image.Controller
 }
 
-func New(in In) *Service {
-	return &Service{
+// TODO norm nado
+func New(in In) {
+	srv := &Service{
 		ImageController: in.ImageController,
 	}
+	grpcServer := grpc.NewServer([]grpc.ServerOption{}...)
+	in.LC.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			ln, err := net.Listen("tcp", "8000")
+			if err != nil {
+				return err
+			}
+			imagev1.RegisterImageServiceServer(grpcServer, srv)
+			in.Logger.Info("Starting grpc server on  8000")
+			return grpcServer.Serve(ln)
+		},
+		OnStop: func(ctx context.Context) error {
+			grpcServer.Stop()
+			return nil
+		},
+	})
 }
 
 func (s *Service) UploadImage(ctx context.Context, r *imagev1.UploadImageRequest) (*imagev1.UploadImageResponse, error) {
