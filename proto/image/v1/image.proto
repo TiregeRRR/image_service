@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package image;
+
+option go_package = "github.com/TiregeRRR/tager_test/proto/image/v1;imagev1";
+
+message UploadImageRequest {
+    oneof data {
+        ImageInfo image_info = 1;
+        bytes chunk_data = 2;
+    };
+}
+
+message ImageInfo {
+    string name = 1;
+}
+
+message UploadImageResponse {
+    ImageInfo image_info = 1;
+}
+
+service ImageService {
+    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {}
+}
