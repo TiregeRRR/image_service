@@ -1,5 +1,10 @@
 package store
 
+import (
+	"os"
+	"path/filepath"
+)
+
 type DiskStorage struct {
 	dir string
 }
@@ -10,12 +15,10 @@ func New(dir string) *DiskStorage {
 	}
 }
 
-// TODO
-func Load(name string) ([]byte, error) {
-	return nil, nil
+func (d *DiskStorage) Load(name string) ([]byte, error) {
+	return os.ReadFile(filepath.Join(d.dir, name))
 }
 
-// TODO
-func Save(name string, data []byte) error {
-	return nil
+func (d *DiskStorage) Save(name string, data []byte) error {
+	return os.WriteFile(filepath.Join(d.dir, name), data, 0666)
 }
