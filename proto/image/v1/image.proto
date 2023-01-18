@@ -2,23 +2,27 @@ syntax = "proto3";
 
 package image;
 
-option go_package = "github.com/TiregeRRR/tager_test/proto/image/v1;imagev1";
+option go_package = "github.com/TiregeRRR/tager-test/proto/image/v1;imagev1";
+
+import "google/protobuf/timestamp.proto";
 
 message UploadImageRequest {
-    oneof data {
-        ImageInfo image_info = 1;
-        bytes chunk_data = 2;
-    };
+    string name = 1;
+    bytes data = 2;
 }
 
 message ImageInfo {
     string name = 1;
+
 }
 
 message UploadImageResponse {
-    ImageInfo image_info = 1;
+    string name = 1;
+    google.protobuf.Timestamp created_at = 2;
+    google.protobuf.Timestamp updated_at = 3;
+    bytes data = 4;
 }
 
 service ImageService {
-    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {}
+    rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
 }
