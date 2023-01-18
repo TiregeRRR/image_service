@@ -3,7 +3,7 @@ package image
 import (
 	"context"
 
-	"github.com/TiregeRRR/tager_test/internal/model"
+	"github.com/TiregeRRR/image_service/internal/model"
 )
 
 type Controller struct{}

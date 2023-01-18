@@ -1,4 +1,4 @@
-module github.com/TiregeRRR/tager_test
+module github.com/TiregeRRR/image_service
 
 go 1.19
 

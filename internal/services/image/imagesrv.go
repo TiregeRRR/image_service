@@ -7,9 +7,9 @@ import (
 	"go.uber.org/fx"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/TiregeRRR/tager_test/internal/controllers/image"
-	"github.com/TiregeRRR/tager_test/internal/model"
-	imagev1 "github.com/TiregeRRR/tager_test/proto/image/v1"
+	"github.com/TiregeRRR/image_service/internal/controllers/image"
+	"github.com/TiregeRRR/image_service/internal/model"
+	imagev1 "github.com/TiregeRRR/image_service/proto/image/v1"
 )
 
 type In struct {
