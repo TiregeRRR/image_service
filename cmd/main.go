@@ -8,7 +8,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/TiregeRRR/image_service/internal/controllers/imagefile"
+	"github.com/TiregeRRR/image_service/db"
+	imagefilectl "github.com/TiregeRRR/image_service/internal/controllers/imagefile"
+	imagefilemgr "github.com/TiregeRRR/image_service/internal/managers/imagefile"
 	"github.com/TiregeRRR/image_service/internal/services"
 	"github.com/TiregeRRR/image_service/pkg/logger"
 )
@@ -25,8 +27,10 @@ func main() {
 		fx.Supply(*conf),
 		fx.Provide(
 			logger.New,
-			imagefile.New,
+			imagefilectl.New,
+			imagefilemgr.New,
 			newGRPCSrv,
+			db.New,
 		),
 
 		services.Module,

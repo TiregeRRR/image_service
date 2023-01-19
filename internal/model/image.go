@@ -5,8 +5,9 @@ import (
 )
 
 type Image struct {
-	Name      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      []byte
+	Name      string    `json:"name" gorm:"primaryKey"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Data      []byte    `gorm:"-"`
+	Path      string    `json:"path"`
 }
