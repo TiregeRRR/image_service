@@ -1,15 +1,15 @@
 package imagesrv
 
 import (
-	"context"
-	"time"
+	"fmt"
+	"io"
 
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/TiregeRRR/image_service/internal/controllers/imagefile"
-	"github.com/TiregeRRR/image_service/internal/model"
 	imagev1 "github.com/TiregeRRR/image_service/proto/image/v1"
 )
 
@@ -36,21 +36,34 @@ func New(in In) *Service {
 	return srv
 }
 
-func (s *Service) UploadImage(ctx context.Context, r *imagev1.UploadImageRequest) (*imagev1.UploadImageResponse, error) {
-	t := time.Now()
-	m, err := s.ImageController.UploadImage(ctx, &model.Image{
-		Name:      r.GetName(),
-		CreatedAt: t,
-		UpdatedAt: t,
-		Data:      r.GetData(),
-	})
+func (s *Service) UploadImage(str imagev1.ImageService_UploadImageServer) error {
+	d, err := str.Recv()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return &imagev1.UploadImageResponse{
-		Name:      m.Name,
-		CreatedAt: timestamppb.New(m.CreatedAt),
-		UpdatedAt: timestamppb.New(m.UpdatedAt),
-		Data:      m.Data,
-	}, nil
+	if d.GetName() == "" {
+		return fmt.Errorf("first chunk must be name")
+	}
+	data := []byte{}
+	for {
+		d, err := str.Recv()
+		if status.Code(err) == codes.Canceled {
+			s.Logger.Info("connection context closed")
+			break
+		}
+		if err == io.EOF {
+			s.Logger.Debug("eof")
+			break
+		}
+		if err != nil {
+			s.Logger.Error("Receive msg", zap.Error(err))
+			return err
+		}
+		if d.GetChunk() == nil {
+			s.Logger.Error("GET CHUNK", zap.Error(err))
+			return fmt.Errorf("chunk not provided")
+		}
+		data = append(data, d.GetChunk()...)
+	}
+	return s.ImageController.UploadImage(d.GetName(), data)
 }

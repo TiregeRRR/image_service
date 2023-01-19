@@ -7,13 +7,14 @@ option go_package = "github.com/TiregeRRR/tager-test/proto/image/v1;imagev1";
 import "google/protobuf/timestamp.proto";
 
 message UploadImageRequest {
-    string name = 1;
-    bytes data = 2;
+    oneof data {
+        string name = 1;
+        bytes chunk = 2;
+    }
 }
 
 message ImageInfo {
     string name = 1;
-
 }
 
 message UploadImageResponse {
@@ -24,5 +25,5 @@ message UploadImageResponse {
 }
 
 service ImageService {
-    rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {}
+    rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {}
 }

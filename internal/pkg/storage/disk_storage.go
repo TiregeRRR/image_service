@@ -1,4 +1,4 @@
-package store
+package storage
 
 import (
 	"os"
@@ -20,5 +20,12 @@ func (d *DiskStorage) Load(name string) ([]byte, error) {
 }
 
 func (d *DiskStorage) Save(name string, data []byte) error {
-	return os.WriteFile(filepath.Join(d.dir, name), data, 0666)
+	f, err := os.OpenFile(filepath.Join(d.dir, name), os.O_APPEND|os.O_CREATE|os.O_WRONLY, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(data); err != nil {
+		return err
+	}
+	return nil
 }

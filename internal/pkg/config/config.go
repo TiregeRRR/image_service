@@ -1,7 +1,6 @@
 package config
 
 type Config struct {
-	DBDriver      string `mapstructure:"DB_DRIVER"`
-	DBSource      string `mapstructure:"DB_SOURCE"`
+	StorageDir    string `mapstructure:"STORAGE_DIR"`
 	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
 }

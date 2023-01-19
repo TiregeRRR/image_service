@@ -1,18 +1,43 @@
 package imagefile
 
 import (
-	"context"
+	"fmt"
+	"sync"
 
-	"github.com/TiregeRRR/image_service/internal/model"
+	"github.com/TiregeRRR/image_service/internal/pkg/config"
+	"github.com/TiregeRRR/image_service/internal/pkg/storage"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
-type Controller struct{}
+type In struct {
+	fx.In
 
-func New() *Controller {
-	return &Controller{}
+	Logger *zap.Logger
+	Config config.Config
 }
 
-func (c *Controller) UploadImage(ctx context.Context, m *model.Image) (*model.Image, error) {
+type Controller struct {
+	logger    *zap.Logger
+	storage   *storage.DiskStorage
+	busyFiles sync.Map
+}
 
-	return m, nil
+func New(in In) *Controller {
+	return &Controller{
+		logger:  in.Logger,
+		storage: storage.New(in.Config.StorageDir),
+	}
+}
+
+func (c *Controller) UploadImage(name string, data []byte) error {
+	if _, ok := c.busyFiles.Load(name); ok {
+		return fmt.Errorf("is busy")
+	}
+	c.busyFiles.Store("name", struct{}{})
+	if err := c.storage.Save(name, data); err != nil {
+		return err
+	}
+	c.logger.Info("image saved")
+	return nil
 }
