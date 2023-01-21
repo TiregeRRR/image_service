@@ -19,7 +19,6 @@ type In struct {
 
 func New(in In) (*gorm.DB, error) {
 	url := generateUrl(in.Config)
-	fmt.Println(url)
 	db, err := gorm.Open(
 		postgres.Open(url),
 		&gorm.Config{},
@@ -37,7 +36,7 @@ func generateUrl(conf config.Config) string {
 		"postgresql",
 		conf.PostgresUser,
 		conf.PostgresPassword,
-		"127.0.0.1",
+		conf.PostgresHost,
 		conf.PostgresPort,
 		conf.PostgresDB,
 	)

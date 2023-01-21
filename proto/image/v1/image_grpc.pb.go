@@ -8,6 +8,7 @@ package imagev1
 
 import (
 	context "context"
+	empty "github.com/golang/protobuf/ptypes/empty"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -23,6 +24,8 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ImageServiceClient interface {
 	UploadImage(ctx context.Context, opts ...grpc.CallOption) (ImageService_UploadImageClient, error)
+	GetImages(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetImagesResponse, error)
+	DownloadImage(ctx context.Context, in *DownloadImageRequest, opts ...grpc.CallOption) (ImageService_DownloadImageClient, error)
 }
 
 type imageServiceClient struct {
@@ -67,11 +70,54 @@ func (x *imageServiceUploadImageClient) CloseAndRecv() (*UploadImageResponse, er
 	return m, nil
 }
 
+func (c *imageServiceClient) GetImages(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetImagesResponse, error) {
+	out := new(GetImagesResponse)
+	err := c.cc.Invoke(ctx, "/image.ImageService/GetImages", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *imageServiceClient) DownloadImage(ctx context.Context, in *DownloadImageRequest, opts ...grpc.CallOption) (ImageService_DownloadImageClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ImageService_ServiceDesc.Streams[1], "/image.ImageService/DownloadImage", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &imageServiceDownloadImageClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ImageService_DownloadImageClient interface {
+	Recv() (*DownloadImageResponse, error)
+	grpc.ClientStream
+}
+
+type imageServiceDownloadImageClient struct {
+	grpc.ClientStream
+}
+
+func (x *imageServiceDownloadImageClient) Recv() (*DownloadImageResponse, error) {
+	m := new(DownloadImageResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ImageServiceServer is the server API for ImageService service.
 // All implementations must embed UnimplementedImageServiceServer
 // for forward compatibility
 type ImageServiceServer interface {
 	UploadImage(ImageService_UploadImageServer) error
+	GetImages(context.Context, *empty.Empty) (*GetImagesResponse, error)
+	DownloadImage(*DownloadImageRequest, ImageService_DownloadImageServer) error
 	mustEmbedUnimplementedImageServiceServer()
 }
 
@@ -81,6 +127,12 @@ type UnimplementedImageServiceServer struct {
 
 func (UnimplementedImageServiceServer) UploadImage(ImageService_UploadImageServer) error {
 	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+}
+func (UnimplementedImageServiceServer) GetImages(context.Context, *empty.Empty) (*GetImagesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetImages not implemented")
+}
+func (UnimplementedImageServiceServer) DownloadImage(*DownloadImageRequest, ImageService_DownloadImageServer) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadImage not implemented")
 }
 func (UnimplementedImageServiceServer) mustEmbedUnimplementedImageServiceServer() {}
 
@@ -121,18 +173,67 @@ func (x *imageServiceUploadImageServer) Recv() (*UploadImageRequest, error) {
 	return m, nil
 }
 
+func _ImageService_GetImages_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageServiceServer).GetImages(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/image.ImageService/GetImages",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageServiceServer).GetImages(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ImageService_DownloadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadImageRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ImageServiceServer).DownloadImage(m, &imageServiceDownloadImageServer{stream})
+}
+
+type ImageService_DownloadImageServer interface {
+	Send(*DownloadImageResponse) error
+	grpc.ServerStream
+}
+
+type imageServiceDownloadImageServer struct {
+	grpc.ServerStream
+}
+
+func (x *imageServiceDownloadImageServer) Send(m *DownloadImageResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // ImageService_ServiceDesc is the grpc.ServiceDesc for ImageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ImageService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "image.ImageService",
 	HandlerType: (*ImageServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetImages",
+			Handler:    _ImageService_GetImages_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "UploadImage",
 			Handler:       _ImageService_UploadImage_Handler,
 			ClientStreams: true,
+		},
+		{
+			StreamName:    "DownloadImage",
+			Handler:       _ImageService_DownloadImage_Handler,
+			ServerStreams: true,
 		},
 	},
 	Metadata: "proto/image/v1/image.proto",

@@ -1,7 +1,7 @@
 package imagefile
 
 import (
-	"fmt"
+	"errors"
 	"sync"
 
 	"github.com/TiregeRRR/image_service/internal/managers/imagefile"
@@ -11,6 +11,8 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var errFileIsBusy = errors.New("file is busy")
 
 type In struct {
 	fx.In
@@ -35,21 +37,35 @@ func New(in In) *Controller {
 	}
 }
 
-func (c *Controller) UploadImage(name string, data []byte) error {
+func (c *Controller) UploadImage(name string, data []byte) (*model.Image, error) {
 	if _, ok := c.busyFiles.Load(name); ok {
-		return fmt.Errorf("is busy")
+		return nil, errFileIsBusy
 	}
-	c.busyFiles.Store("name", struct{}{})
-	path, err := c.storage.Save(name, data)
-	if err != nil {
-		return err
-	}
-	err = c.imageManager.Create(&model.Image{
+	c.busyFiles.Store(name, struct{}{})
+	defer c.busyFiles.Delete(name)
+	m, err := c.imageManager.Upsert(&model.Image{
 		Name: name,
-		Path: path,
+		Data: data,
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return m, nil
+}
+
+func (c *Controller) GetImages() ([]*model.Image, error) {
+	return c.imageManager.GetImages()
+}
+
+func (c *Controller) DownloadImage(name string) (*model.Image, error) {
+	if _, ok := c.busyFiles.Load(name); ok {
+		return nil, errFileIsBusy
+	}
+	c.busyFiles.Store(name, struct{}{})
+	defer c.busyFiles.Delete(name)
+	m, err := c.imageManager.GetImageData(name)
+	if err != nil {
+		return nil, err
+	}
+	return m, nil
 }

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/TiregeRRR/image_service/internal/pkg/config"
@@ -10,7 +8,6 @@ import (
 )
 
 func LoadConfig(path string) (*config.Config, error) {
-	fmt.Println(os.Getwd())
 	viper.SetConfigFile(filepath.Join(path, "dev.env"))
 	viper.AutomaticEnv()
 

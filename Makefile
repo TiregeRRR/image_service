@@ -10,7 +10,7 @@ generate-proto:
 		proto/image/v1/image.proto
 
 start-postgres: 
-	podman run \
+	docker run \
 	-it --rm \
 	--name imagePostgres \
 	-p 127.0.0.1:5432:5432 \
@@ -20,10 +20,16 @@ start-postgres:
 	-d postgres
 
 stop-postgres:
-	podman kill imagePostgres
+	docker kill imagePostgres
 
 build-image-service:
-	podman build -t image_service .
+	docker build -t image_service .
 
 run-image-service:
-	podman run -it --rm image_service:latest
+	docker run -it --rm image_service:latest
+
+run-service:
+	docker compose --env-file ./configs/dev.env up
+
+stop-service:
+	docker compose --env-file ./configs/dev.env down

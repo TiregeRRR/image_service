@@ -5,6 +5,7 @@ package image;
 option go_package = "github.com/TiregeRRR/tager-test/proto/image/v1;imagev1";
 
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 message UploadImageRequest {
     oneof data {
@@ -13,17 +14,30 @@ message UploadImageRequest {
     }
 }
 
-message ImageInfo {
-    string name = 1;
-}
-
-message UploadImageResponse {
+message Image {
     string name = 1;
     google.protobuf.Timestamp created_at = 2;
     google.protobuf.Timestamp updated_at = 3;
-    bytes data = 4;
+}
+
+message GetImagesResponse {
+    repeated Image image = 1;
+}
+
+message UploadImageResponse {
+   Image image = 1; 
+}
+
+message DownloadImageRequest {
+    string name = 1;
+}
+
+message DownloadImageResponse {
+    bytes chunk = 1;
 }
 
 service ImageService {
     rpc UploadImage(stream UploadImageRequest) returns (UploadImageResponse) {}
+    rpc GetImages(google.protobuf.Empty) returns (GetImagesResponse) {}
+    rpc DownloadImage(DownloadImageRequest) returns (stream DownloadImageResponse) {}
 }
