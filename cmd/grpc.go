@@ -25,7 +25,11 @@ func newGRPCSrv(
 				return err
 			}
 			logger.Info("Starting grpc server at: ", zap.String("", fmt.Sprintf("%s:%s", config.ServerHost, config.ServerPort)))
-			go srv.Serve(listener)
+			go func() {
+				if err := srv.Serve(listener); err != nil {
+					panic(err)
+				}
+			}()
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {
